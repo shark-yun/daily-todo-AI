@@ -65,6 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       await fetch(GOOGLE_SHEET_URL, {
         method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({
           id: currentUser.id,
           phone: currentUser.phone,
