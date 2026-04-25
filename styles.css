@@ -64,6 +64,12 @@ body {
 }
 .btn-login:active { opacity: 0.85; }
 .login-error { color: #ff3b30; font-size: 13px; margin-top: 12px; text-align: center; min-height: 20px;}
+.powered-by { 
+  font-size: 11px; color: var(--text-tertiary); 
+  text-align: center; position: absolute; 
+  bottom: 2.5rem; left: 0; right: 0; 
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
 
 /* ── Calendar ── */
 .cal-header {
@@ -279,6 +285,18 @@ body {
   border-radius: 2px; margin: 14px auto 22px;
 }
 .sheet-title { font-size: 15px; font-weight: 500; margin-bottom: 14px; }
+
+.quick-add-wrap {
+  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 4px;
+  -ms-overflow-style: none; scrollbar-width: none;
+}
+.quick-add-wrap::-webkit-scrollbar { display: none; }
+.btn-quick {
+  flex-shrink: 0; padding: 6px 14px; border: 1px solid var(--border-secondary);
+  border-radius: 20px; background: var(--bg-secondary); color: var(--text-secondary);
+  font-size: 13px; cursor: pointer; transition: all 0.2s;
+}
+.btn-quick:active { background: var(--text); color: var(--bg); border-color: var(--text); }
 
 .sheet input[type=text] {
   width: 100%; border: 0.5px solid var(--border-secondary);

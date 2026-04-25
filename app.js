@@ -1,18 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
-  
+
   // ==========================================
   // 【請將您的 Google Apps Script 部署網址貼在這裡】
   // ==========================================
-  const GOOGLE_SHEET_URL = ''; 
+  const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxsSjH0Pioxbkfiy3JFucv4BAov2mHYZkZOlp6BLogdH63z1uuBgwIaNjo39X7Qpny0gA/exec';
 
-  const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-  const WEEKDAYS = ['日','一','二','三','四','五','六'];
+  const MONTHS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+  const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
 
   const realToday = new Date();
   let calYear = realToday.getFullYear();
   let calMonth = realToday.getMonth();
   let selectedKey = '';
-  
+
   let currentUser = JSON.parse(localStorage.getItem('todo_user'));
   let friends = JSON.parse(localStorage.getItem('todo_friends') || '[]');
   let syncTimeout = null;
@@ -36,12 +36,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const id = document.getElementById('login-id').value.trim();
     const phone = document.getElementById('login-phone').value.trim();
     const errorEl = document.getElementById('login-error');
-    
+
     if (!id || !phone) {
       errorEl.textContent = '請輸入完整 ID 與手機號碼';
       return;
     }
-    
+
     currentUser = { id, phone };
     localStorage.setItem('todo_user', JSON.stringify(currentUser));
     errorEl.textContent = '';
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ── Sync Logic ── */
   async function syncToGoogleSheet(dateStr, tasks) {
     if (!currentUser || !GOOGLE_SHEET_URL.startsWith('http')) return;
-    
+
     const statusEl = document.getElementById('sync-status');
     statusEl.textContent = '同步中...';
     statusEl.className = 'sync-status syncing';
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       statusEl.textContent = '已同步雲端';
       statusEl.className = 'sync-status';
-    } catch(err) {
+    } catch (err) {
       console.error('Sync failed', err);
       statusEl.textContent = '同步失敗';
       statusEl.className = 'sync-status error';
@@ -83,66 +83,66 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchFromGoogleSheet() {
     if (!currentUser || !GOOGLE_SHEET_URL.startsWith('http')) return;
-    
+
     try {
       const res = await fetch(`${GOOGLE_SHEET_URL}?id=${currentUser.id}&phone=${currentUser.phone}`);
       const data = await res.json();
-      
+
       Object.keys(data).forEach(dateStr => {
         if (Array.isArray(data[dateStr])) {
           localStorage.setItem('todos_' + dateStr, JSON.stringify(data[dateStr]));
         }
       });
-      renderCal(); 
-      if (selectedKey) renderList(); 
-    } catch(err) {}
+      renderCal();
+      if (selectedKey) renderList();
+    } catch (err) { }
   }
 
   /* ── Storage ── */
   function dateKey(y, m, d) {
-    return y + '-' + String(m + 1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
   }
   function todayKey() {
     return dateKey(realToday.getFullYear(), realToday.getMonth(), realToday.getDate());
   }
   function getTasks(key) {
-    try { return JSON.parse(localStorage.getItem('todos_' + key) || '[]'); } catch(e) { return []; }
+    try { return JSON.parse(localStorage.getItem('todos_' + key) || '[]'); } catch (e) { return []; }
   }
   function saveTasks(key, tasks) {
-    try { 
-      localStorage.setItem('todos_' + key, JSON.stringify(tasks)); 
-      
-      if(syncTimeout) clearTimeout(syncTimeout);
+    try {
+      localStorage.setItem('todos_' + key, JSON.stringify(tasks));
+
+      if (syncTimeout) clearTimeout(syncTimeout);
       syncTimeout = setTimeout(() => {
         syncToGoogleSheet(key, tasks);
       }, 1000);
-      
+
       updateDashboard();
 
-    } catch(e) {}
+    } catch (e) { }
   }
 
   /* ── Dashboard Stats ── */
   function updateDashboard() {
     let monthlyTotal = 0; let monthlyDone = 0;
     let weeklyTotal = 0; let weeklyDone = 0;
-    
+
     // Get week dates
     const today = new Date();
     const currDay = today.getDay(); // 0-6
     const firstDayOfWeek = new Date(today);
     firstDayOfWeek.setDate(today.getDate() - currDay);
-    
+
     const weekDates = [];
-    for(let i=0; i<7; i++) {
+    for (let i = 0; i < 7; i++) {
       const d = new Date(firstDayOfWeek);
       d.setDate(d.getDate() + i);
       weekDates.push(dateKey(d.getFullYear(), d.getMonth(), d.getDate()));
     }
-    
-    const monthPrefix = `${calYear}-${String(calMonth+1).padStart(2,'0')}`;
-    const allDates = Object.keys(localStorage).filter(k => k.startsWith('todos_')).map(k => k.replace('todos_',''));
-    
+
+    const monthPrefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
+    const allDates = Object.keys(localStorage).filter(k => k.startsWith('todos_')).map(k => k.replace('todos_', ''));
+
     allDates.forEach(dateStr => {
       if (dateStr.startsWith(monthPrefix)) {
         const tasks = getTasks(dateStr);
@@ -155,10 +155,10 @@ document.addEventListener('DOMContentLoaded', () => {
         weeklyDone += tasks.filter(t => t.done).length;
       }
     });
-    
-    const mRate = monthlyTotal === 0 ? 0 : Math.round((monthlyDone/monthlyTotal)*100);
-    const wRate = weeklyTotal === 0 ? 0 : Math.round((weeklyDone/weeklyTotal)*100);
-    
+
+    const mRate = monthlyTotal === 0 ? 0 : Math.round((monthlyDone / monthlyTotal) * 100);
+    const wRate = weeklyTotal === 0 ? 0 : Math.round((weeklyDone / weeklyTotal) * 100);
+
     document.getElementById('stat-monthly').textContent = mRate + '%';
     document.getElementById('stat-weekly').textContent = wRate + '%';
   }
@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return t.filter(x => x.done).length / t.length;
   }
   function rateColor(rate) {
-    if (rate < 0)   return null;
+    if (rate < 0) return null;
     if (rate === 0) return '#e8f5e9';
     if (rate < 0.4) return '#a5d6a7';
     if (rate < 0.8) return '#66bb6a';
@@ -200,9 +200,9 @@ document.addEventListener('DOMContentLoaded', () => {
     for (let d = 1; d <= daysInMonth; d++) {
       const key = dateKey(calYear, calMonth, d);
       const isToday = key === todayKey();
-      const isSel   = key === selectedKey;
-      const rate    = getRate(key);
-      const color   = rateColor(rate);
+      const isSel = key === selectedKey;
+      const rate = getRate(key);
+      const color = rateColor(rate);
 
       const el = document.createElement('div');
       el.className = 'cal-day' + (isToday ? ' today' : '') + (isSel ? ' selected' : '');
@@ -234,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('view-cal').classList.remove('active');
     document.getElementById('view-list').classList.add('active');
     document.getElementById('fab').classList.add('visible');
-    
+
     document.getElementById('sync-status').textContent = GOOGLE_SHEET_URL ? '已載入' : '離線模式';
     document.getElementById('sync-status').className = 'sync-status';
 
@@ -251,11 +251,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderList() {
-    const tasks   = getTasks(selectedKey);
+    const tasks = getTasks(selectedKey);
     const pending = tasks.filter(t => !t.done);
-    const done    = tasks.filter(t => t.done);
-    const total   = tasks.length;
-    const pct     = total === 0 ? 0 : Math.round(done.length / total * 100);
+    const done = tasks.filter(t => t.done);
+    const total = tasks.length;
+    const pct = total === 0 ? 0 : Math.round(done.length / total * 100);
 
     document.getElementById('progress').style.width = pct + '%';
     document.getElementById('progress-pct').textContent = pct + '%';
@@ -282,8 +282,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function makeItem(task) {
     const li = document.createElement('li');
     li.className = 'todo-item' + (task.done ? ' done' : '');
-    li.addEventListener('click', (e) => { 
-        if (!e.target.classList.contains('del-btn')) toggle(task.id); 
+    li.addEventListener('click', (e) => {
+      if (!e.target.classList.contains('del-btn')) toggle(task.id);
     });
 
     const box = document.createElement('div');
@@ -302,9 +302,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const del = document.createElement('button');
     del.className = 'del-btn';
     del.textContent = '×';
-    del.addEventListener('click', (e) => { 
-        e.stopPropagation(); 
-        remove(task.id); 
+    del.addEventListener('click', (e) => {
+      e.stopPropagation();
+      remove(task.id);
     });
 
     li.append(box, text, del);
@@ -341,12 +341,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-open-ranking').addEventListener('click', () => {
     document.getElementById('view-cal').classList.remove('active');
     document.getElementById('view-ranking').classList.add('active');
-    document.getElementById('ranking-title').textContent = `${calMonth+1}月 排行榜`;
+    document.getElementById('ranking-title').textContent = `${calMonth + 1}月 排行榜`;
     fetchRanking();
   });
-  
+
   document.getElementById('btn-back-ranking').addEventListener('click', showCal);
-  
+
   document.getElementById('btn-add-friend').addEventListener('click', () => {
     const phone = document.getElementById('friend-phone').value.trim();
     if (phone && !friends.includes(phone) && phone !== currentUser?.phone) {
@@ -360,34 +360,34 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchRanking() {
     const listEl = document.getElementById('ranking-list');
     listEl.innerHTML = '<li class="empty-state">載入中...</li>';
-    
+
     if (!GOOGLE_SHEET_URL.startsWith('http')) {
       listEl.innerHTML = '<li class="empty-state">請先依照教學設定 Google Sheet URL</li>';
       return;
     }
-    
+
     const phones = [currentUser.phone, ...friends].join(',');
-    const month = `${calYear}-${String(calMonth+1).padStart(2,'0')}`;
-    
+    const month = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
+
     try {
       const res = await fetch(`${GOOGLE_SHEET_URL}?action=ranking&month=${month}&phones=${phones}`);
       const ranking = await res.json();
-      
+
       listEl.innerHTML = '';
       if (ranking.length === 0) {
         listEl.innerHTML = '<li class="empty-state">本月尚無資料</li>';
         return;
       }
-      
+
       ranking.forEach((r, idx) => {
         const li = document.createElement('li');
         li.className = 'rank-item';
-        
-        let numStr = (idx+1).toString();
-        if(idx===0) numStr = '🥇';
-        if(idx===1) numStr = '🥈';
-        if(idx===2) numStr = '🥉';
-        
+
+        let numStr = (idx + 1).toString();
+        if (idx === 0) numStr = '🥇';
+        if (idx === 1) numStr = '🥈';
+        if (idx === 2) numStr = '🥉';
+
         li.innerHTML = `
           <div class="rank-info">
             <span class="rank-num">${numStr}</span>
@@ -400,8 +400,8 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         listEl.appendChild(li);
       });
-      
-    } catch(err) {
+
+    } catch (err) {
       listEl.innerHTML = '<li class="empty-state">排行榜載入失敗</li>';
     }
   }
@@ -419,6 +419,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ── Event Listeners ── */
+  document.querySelectorAll('.btn-quick').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('new-task').value = btn.textContent;
+      document.getElementById('new-task').focus();
+    });
+  });
+
   document.getElementById('prev-btn').addEventListener('click', () => {
     calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCal();
   });
