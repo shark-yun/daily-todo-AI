@@ -62,22 +62,36 @@ document.addEventListener('DOMContentLoaded', () => {
     statusEl.textContent = '同步中...';
     statusEl.className = 'sync-status syncing';
 
+    const payload = {
+      id: currentUser.id,
+      phone: currentUser.phone,
+      date: dateStr,
+      tasks: tasks
+    };
+    console.log('[Sync] POST payload:', payload);
+
     try {
-      await fetch(GOOGLE_SHEET_URL, {
+      const res = await fetch(GOOGLE_SHEET_URL, {
         method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({
-          id: currentUser.id,
-          phone: currentUser.phone,
-          date: dateStr,
-          tasks: tasks
-        })
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
       });
-      statusEl.textContent = '已同步雲端';
-      statusEl.className = 'sync-status';
+
+      // Try to read response to verify it worked
+      let result;
+      try { result = await res.text(); } catch (_) { result = '(no body)'; }
+      console.log('[Sync] Response status:', res.status, 'body:', result);
+
+      if (res.ok) {
+        statusEl.textContent = '已同步雲端 ✓';
+        statusEl.className = 'sync-status';
+      } else {
+        console.warn('[Sync] Non-OK status:', res.status);
+        statusEl.textContent = '同步異常 (' + res.status + ')';
+        statusEl.className = 'sync-status error';
+      }
     } catch (err) {
-      console.error('Sync failed', err);
+      console.error('[Sync] Failed:', err);
       statusEl.textContent = '同步失敗';
       statusEl.className = 'sync-status error';
     }
@@ -86,18 +100,29 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchFromGoogleSheet() {
     if (!currentUser || !GOOGLE_SHEET_URL.startsWith('http')) return;
 
+    console.log('[Sync] GET fetch for user:', currentUser.id);
     try {
       const res = await fetch(`${GOOGLE_SHEET_URL}?id=${currentUser.id}&phone=${currentUser.phone}`);
-      const data = await res.json();
+      const text = await res.text();
+      console.log('[Sync] GET response status:', res.status, 'body preview:', text.substring(0, 200));
+
+      let data;
+      try { data = JSON.parse(text); } catch (parseErr) {
+        console.error('[Sync] GET response is NOT valid JSON — 可能是權限問題（Google 登入頁）');
+        return;
+      }
 
       Object.keys(data).forEach(dateStr => {
         if (Array.isArray(data[dateStr])) {
           localStorage.setItem('todos_' + dateStr, JSON.stringify(data[dateStr]));
         }
       });
+      console.log('[Sync] GET success, loaded dates:', Object.keys(data));
       renderCal();
       if (selectedKey) renderList();
-    } catch (err) { }
+    } catch (err) {
+      console.error('[Sync] GET failed:', err);
+    }
   }
 
   /* ── Storage ── */
